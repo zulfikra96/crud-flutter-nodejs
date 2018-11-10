@@ -8,7 +8,6 @@ const mail          = require('../core/email')
 const salt = fs.readFileSync(`${__dirname}/../.salts`).toString()
 
 
-
 class Users extends Database {
 
     constructor()
@@ -223,10 +222,131 @@ class Users extends Database {
                         })
                         return
                     })
-
-                
-
             })
+    }
+
+    loginPostVol2(req,res)
+    {
+        let data            = req.body
+        let is_error        = false
+        let display_error   = []
+        let _this           = this
+        
+
+        for(let err in data)
+        {
+            if(data[err] == ''){
+                is_error = true
+                display_error.push(`Maaf ${err} tidak boleh kosong`) 
+            }
+        }
+
+        console.log(display_error)
+        if(is_error)
+        {
+            return res.status(400).json({
+                success:false,
+                message:display_error
+            })
+        }
+
+        this.Select(['username','password'])
+            .From('users')
+            .Where({column:'username', value:`'${data.username}'`})
+            .Get(function(err,result){
+                result = result.rows
+                if(err){
+                   console.log(err);
+                }
+
+                if(result[0] == undefined)
+                {
+                    return res.status(400).json({
+                        success:false,
+                        message:['maaf username anda salah'],
+                        input:'password'
+                    })
+                }
+
+                let password = crypt.decrypt(result[0].password);
+
+                if(password != data.password)
+                {
+                    return res.status(400).json({
+                        success:false,
+                        message:['maaf password anda salah'],
+                        input:'password'
+                    })    
+                }
+
+                let token = md.createToken(result[0])
+                
+                _this.Update('users')
+                    .SetColumn({column:'token',value:`'${token}'`})
+                    .Where({column:'user_id',value:result[0].user_id})
+                    .Set(function(err,result){
+                        if(err) console.log(err);
+                        console.log(result);
+                        
+                        res.json({
+                            success:true,
+                            status:200,
+                            token:token,
+                        })
+                        return
+                    })
+            })
+    }
+
+    registerPostVol2(req,res)
+    {
+        let data = req.body;
+        let inc = 0;
+        let length_obj = Object.keys(data).length
+        let hasError = false
+        let error_obj = {}
+        // let _token = md.createToken(rows)
+        let password = crypt.encrypt(data.password)
+        for(let obj in data)
+        {
+            if(data[obj] == '')
+            {
+                hasError = true;
+                error_obj[obj] = ''
+            }
+        }
+
+        if(hasError){
+            // console.log(error_obj)
+            return res.status(400)
+            .json({
+                message:'There are errors',
+                error_message:error_obj
+            })
+        }
+
+        if(data.password != data.password_validation)
+        {
+            return res.status(400)
+                .json({
+                    message:'Password harus sesuai dengan ulangi password',
+                    success:false,
+                })
+        }
+
+        this.Insert()
+            .Into('users')
+            .Column(['username','fullname','password','role','created_at'])
+            .Value([`'${data.username}'`,`'${data.fullname}'`,`'${password}'`,`'tamu'`,'NOW()'])
+            .Set(function(err,result){
+                if(err) console.log(err);
+                
+                return res.json({
+                    message:'Berhasil kirim',
+                    success:true,
+                    status:200
+                })
+            });
     }
 
 
