@@ -14,7 +14,6 @@ chai.use(chaiHttp)
 
 describe('Test REST API',function(){
 
-
     describe('test todo',function(){
 
         it('testing get todo',function(done){

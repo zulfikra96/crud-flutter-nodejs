@@ -21,7 +21,10 @@ class Todo extends Database {
             .Where({column:'user_id',value:session.user_id})
             .Get(function(err,result){
                 if(err) console.log(err)
-
+                for(let key = 0; key < result.rows.length; key++)
+                {
+                    result.rows[key].image = '/api/todo/image/' + result.rows[key].todo_id
+                }
                 return res.json(result.rows)
             })
     }
@@ -155,6 +158,32 @@ class Todo extends Database {
         
 
         
+    }
+
+    getTodoPhoto(req,res,session)
+    {
+        session = session.session
+        let _id = req.params.id
+
+        this.Select(['path_files'])
+            .From('todo')
+            .Where({column:'todo_id',value:_id})
+            .AndWhere({column:'user_id',value:session.user_id})
+            .Get(function(err,result){
+
+                fs.readFile(result.rows[0].path_files,function(err,data){
+                    if(err) console.log(err)
+
+                    res.writeHead(200,{
+                        'Content-Type':"image/jpeg",
+                        'Content-Type':"image/jpg",
+                        'Content-Type':"image/png",
+                    })
+
+                    res.end(data)
+                })
+
+            })
     }
 
 

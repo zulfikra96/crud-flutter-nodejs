@@ -50,6 +50,12 @@ const route = (app, recaptcha, md, formidable) => {
         },['tamu'])
     })
 
+    app.get('/api/todo/image/:id',function(req,res){
+        md.tokenVerify(req,res,function(session){
+            todo.getTodoPhoto(req,res,session)
+        },['tamu'])
+    })
+
 }
 
 
