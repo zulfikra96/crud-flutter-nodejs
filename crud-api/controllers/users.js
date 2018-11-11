@@ -250,16 +250,19 @@ class Users extends Database {
             })
         }
 
-        this.Select(['username','password'])
+        this.Select(['username','password','user_id'])
             .From('users')
             .Where({column:'username', value:`'${data.username}'`})
             .Get(function(err,result){
-                result = result.rows
+                let results = result.rows
+
+                console.log(results[0]);
+
                 if(err){
                    console.log(err);
                 }
 
-                if(result[0] == undefined)
+                if(results[0] == undefined)
                 {
                     return res.status(400).json({
                         success:false,
@@ -268,7 +271,7 @@ class Users extends Database {
                     })
                 }
 
-                let password = crypt.decrypt(result[0].password);
+                let password = crypt.decrypt(results[0].password);
 
                 if(password != data.password)
                 {
@@ -279,11 +282,12 @@ class Users extends Database {
                     })    
                 }
 
-                let token = md.createToken(result[0])
+                let token = md.createToken(results[0])
+                
                 
                 _this.Update('users')
                     .SetColumn({column:'token',value:`'${token}'`})
-                    .Where({column:'user_id',value:result[0].user_id})
+                    .Where({column:'user_id',value:results[0].user_id})
                     .Set(function(err,result){
                         if(err) console.log(err);
                         console.log(result);

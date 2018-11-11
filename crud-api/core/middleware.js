@@ -32,15 +32,17 @@ class Middleware extends Cryptr {
             role = [`${role}`]
         }
         
-        database.Select(['token','user_id','nomor_induk','email','no_telp','roles'])
+        database.Select(['token','user_id','username','role'])
                 .From('users')
                 .Where({column:'token',value:`'${_token}'`})
                 .Get(function(err,result){
+                    
                     if(err) console.log(err);
+
                     if(result.rows[0] != undefined){
                         let error = 0
                         for (let i = 0; i < role.length; i++) {
-                            if(role[i] != undefined && role[i] != result.rows[0].roles)
+                            if(role[i] != undefined && role[i] != result.rows[0].role)
                             {
                                 error++
                             }

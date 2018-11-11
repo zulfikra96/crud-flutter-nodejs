@@ -111,6 +111,12 @@ class Database {
         return promises
     }
 
+    DeleteFrom(table)
+    {
+        this.field = ` DELETE FROM ${table}`
+        return this
+    }
+
     Insert()
     {
         this.field = `INSERT `
@@ -132,6 +138,12 @@ class Database {
         return this
     }
 
+    AndSetColumn(args = {column:'',value:0})
+    {
+        this.field += `, ${args.column} = ${args.value} `
+
+        return this
+    }
 
 
 
@@ -156,7 +168,7 @@ class Database {
 
     Set(callback)
     {
-        console.log(this.field);
+        // console.log(this.field);
         // return
         
 
@@ -166,6 +178,22 @@ class Database {
         })
 
         return this
+    }
+
+    SetAsync()
+    {
+        // console.log(this.field)
+        let _this = this
+       let db = new Promise(function(res,rej){
+            DB.query(_this.field,function(err,result){
+                if(err){
+                    rej(err)
+                }
+                res(result)
+            })
+       }) 
+
+       return db
     }
     
     CreateTable(args)
@@ -200,6 +228,14 @@ class Database {
     String(args)
     {
         let type = ` VARCHAR(${args}) `
+        this.field += type
+        this.isSetDataType = true
+        return this
+    }
+
+    DateTime()
+    {
+        let type = ` TIMESTAMP WITH TIME ZONE `
         this.field += type
         this.isSetDataType = true
         return this
@@ -316,6 +352,8 @@ class Database {
 
         }
         // return db
+        // console.log(db);
+
         DB.query(db,(err,result) => {
             if(err)
             {
