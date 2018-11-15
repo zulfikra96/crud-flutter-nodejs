@@ -3,7 +3,7 @@ const { Middleware } = require('../core/middleware')
 const formidable = require('formidable')
 const fs = require('fs')
 
-
+    
 class Todo extends Database {
 
 
@@ -19,6 +19,8 @@ class Todo extends Database {
         this.Select(['todo_id','title','description','start_time','end_time'])
             .From('todo')
             .Where({column:'user_id',value:session.user_id})
+            .OrderBy('todo_id')
+            .Desc()
             .Get(function(err,result){
                 if(err) console.log(err)
                 for(let key = 0; key < result.rows.length; key++)
@@ -32,7 +34,10 @@ class Todo extends Database {
     createTodo(req, res, session) {
 
         this.session = session.session
-        console.log(this.session);
+        console.log(req.body);
+
+        if(req.body.start_time == 'null') req.body.start_time = "2018-01-10 00:00:00"
+        if(req.body.end_time == 'null') req.body.end_time = "2018-01-10 00:00:00"
 
         let _this = this
         let date_time = new Date()
@@ -52,16 +57,21 @@ class Todo extends Database {
             .Value([`'${req.body.title}'`, `'${req.body.description}'`, `'${path}'`, `'${req.body.start_time}'`, `'${req.body.end_time}'`, 'NOW()',`${this.session.user_id}`])
             .Set(function (err, result) {
                 if (err) console.log(err);
-
-                req.files.photo.mv(path, function (err) {
-                    if (err) console.log(err);
-
-                    res.status(200)
-                        .json({
-                            success: true,
-                            message: 'Berhasil Upload'
-                        })
-                })
+                
+ 
+                if(req.files != null)
+                {
+                    req.files.photo.mv(path, function (err) {
+                        if (err) console.log(err);
+    
+                        res.status(200)
+                            .json({
+                                success: true,
+                                message: 'Berhasil Upload'
+                            })
+                    })
+                }
+                
             });
 
 
@@ -84,8 +94,14 @@ class Todo extends Database {
                     success:false
                 })
         }
+        
+        console.log("file path " + DB.rows[0].path_files);
+        
+        if(fs.existsSync(DB.rows[0].path_files ))
+        {
+            fs.unlinkSync(DB.rows[0].path_files)
+        }
 
-        fs.unlinkSync(DB.rows[0].path_files)
 
         this.DeleteFrom('todo')
             .Where({column:'user_id',value:session.user_id})
@@ -170,9 +186,35 @@ class Todo extends Database {
             .Where({column:'todo_id',value:_id})
             .AndWhere({column:'user_id',value:session.user_id})
             .Get(function(err,result){
+                if(result.rows[0] == undefined)
+                {
+                    fs.readFile(`${__dirname}/../assets/images/logo-untag.png`,function(err,data){
+                        res.writeHead(200,{
+                            'Content-Type':"image/jpeg",
+                            'Content-Type':"image/jpg",
+                            'Content-Type':"image/png",
+                        })
+    
+                        res.end(data)
+                    })
 
+                    return
+                }
                 fs.readFile(result.rows[0].path_files,function(err,data){
-                    if(err) console.log(err)
+                    if(err){
+                        console.log(err);
+                        fs.readFile(`${__dirname}/../assets/images/logo-untag.png`,function(err,data){
+                            res.writeHead(200,{
+                                'Content-Type':"image/jpeg",
+                                'Content-Type':"image/jpg",
+                                'Content-Type':"image/png",
+                            })
+        
+                            res.end(data)
+                        })
+
+                        return
+                    }
 
                     res.writeHead(200,{
                         'Content-Type':"image/jpeg",

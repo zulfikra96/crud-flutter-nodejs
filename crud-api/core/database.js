@@ -84,6 +84,24 @@ class Database {
         return this
     }
 
+    OrderBy(args)
+    {
+        this.field += ` ORDER BY ${args} `
+        return this
+    }
+
+    Desc()
+    {
+        this.field += ` DESC `
+        return this
+    }
+
+    Asc()
+    {
+        this.field += ` ASC `
+        return this
+    }
+
     Get(callback)
     {
         // console.log(this.field);
@@ -235,7 +253,7 @@ class Database {
 
     DateTime()
     {
-        let type = ` TIMESTAMP WITH TIME ZONE `
+        let type = ` TIMESTAMP   `
         this.field += type
         this.isSetDataType = true
         return this

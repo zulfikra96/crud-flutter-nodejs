@@ -37,7 +37,7 @@ const route = (app, recaptcha, md, formidable) => {
             todo.createTodo(req,res,session)
         },['tamu'])
     })
-
+    
     app.delete('/api/todo/:id', function (req, res) {
         md.tokenVerify(req, res, function (session) {
             todo.deleteTodo(req,res,session)

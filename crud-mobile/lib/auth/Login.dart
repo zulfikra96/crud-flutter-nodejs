@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:crud/auth/Register.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:crud/core/database.dart';
+import 'package:crud/home/Home.dart';
 
 class MainLogin extends StatefulWidget {
   @override
@@ -11,8 +13,12 @@ class MainLogin extends StatefulWidget {
 class Login extends State<MainLogin> {
   Map formInput = {'username': '', 'password': ''};
 
+  Map user = {'_token': ''};
+  var context;
   bool is_loading = false;
   bool has_error = false;
+  bool login_success = false;
+  List data_token = new List();
   String error_message;
 
   String displayError(List message) {
@@ -26,20 +32,44 @@ class Login extends State<MainLogin> {
     return error;
   }
 
+
   loginPost() async {
     var response =
-        await http.post('http://10.208.7.151:3000/api/login', body: formInput);
+        await http.post('http://192.168.1.21:3000/api/login', body: formInput);
+    // print(response.body);
+
+    SqliteDatabase sqlite = new SqliteDatabase();
 
     if (response.statusCode == 400) {
       setState(() {
         this.has_error = true;
         dynamic body = jsonDecode(response.body);
         this.error_message = displayError(body['message']);
+        this.login_success = false;
       });
     } else if (response.statusCode == 200) {
+      dynamic _response = json.decode(response.body);
       setState(() {
+        this.user['_token'] = _response['token'];
         this.is_loading = false;
+        sqlite.database((db) async {
+          await db.rawUpdate(
+              'UPDATE session SET session = ?', [this.user['_token']]);
+        });
+
+        this.login_success = true;
       });
+    }
+
+    if (this.login_success) {
+      Navigator.push(
+        this.context,
+        MaterialPageRoute(
+          builder: (context) => new MainHome()
+        )
+      );
+    } else {
+      print("gagal login");
     }
   }
 
@@ -51,6 +81,9 @@ class Login extends State<MainLogin> {
 
   @override
   Widget build(BuildContext context) {
+    setState((){
+      this.context = context;
+    });
     return Scaffold(
       body: Stack(
         children: <Widget>[
@@ -164,16 +197,18 @@ class Login extends State<MainLogin> {
                             padding: EdgeInsets.symmetric(horizontal: 98.0),
                           ),
                     actions: <Widget>[
-                      RaisedButton(
-                        child: Text("Tutup"),
-                        color: Colors.yellow,
-                        onPressed: () {
-                          setState(() {
-                            this.is_loading = false;
-                            this.has_error = false;
-                          });
-                        },
-                      )
+                      (this.has_error)
+                          ? RaisedButton(
+                              child: Text("Tutup"),
+                              color: Colors.yellow,
+                              onPressed: () {
+                                setState(() {
+                                  this.is_loading = false;
+                                  this.has_error = false;
+                                });
+                              },
+                            )
+                          : Container()
                     ],
                   ),
                 )
